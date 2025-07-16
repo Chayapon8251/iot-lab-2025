@@ -5,6 +5,10 @@ import { env } from "hono/adapter";
 
 const apiRouter = new Hono();
 
+apiRouter.get("/", (c) => {
+  return c.json({ message: "Book Store API" });
+});
+
 apiRouter.use(
   "*",
   bearerAuth({
