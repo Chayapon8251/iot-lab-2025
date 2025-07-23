@@ -176,13 +176,13 @@ ws.onmessage = (event) => {
   World.add(engine.world, [body]);
   wordBodies.push({ elem: span, body });
 
-  if (wordBodies.length > 10) {
+  if (wordBodies.length > 18) {
     const first = wordBodies.shift();
     if (first) {
       console.log(`Removing ${first.elem.textContent}`);
 
       first.body.collisionFilter = {
-        category: 0x0003,
+        category: 0x0002,
       };
       World.remove(engine.world, first.body);
       textContainer.removeChild(first.elem);

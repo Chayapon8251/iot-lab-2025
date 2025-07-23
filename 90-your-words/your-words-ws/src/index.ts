@@ -39,9 +39,11 @@ app.get(
       },
       onMessage(event, ws) {
         console.log(`[SessionId: ${cuid}] Message received: ${event.data}`);
+        const text = (event.data as string).trim().slice(0, 15);
+        if (!text) return;
         sessionService.broadcast(
           JSON.stringify({
-            text: (event.data as string).trim().slice(0, 15),
+            text,
             font: FONTS[Math.floor(Math.random() * FONTS.length)],
             fontWeight: FONT_WEIGHTS[Math.floor(Math.random() * FONT_WEIGHTS.length)],
             fontSize: FONT_SIZES[Math.floor(Math.random() * FONT_SIZES.length)],
