@@ -130,10 +130,6 @@ ws.onmessage = (event) => {
 
   const { text, font, fontWeight, fontSize } = data;
 
-  const boxA = Bodies.rectangle(400, 200, 80, 80);
-  World.add(engine.world, [boxA]);
-  console.log("?");
-
   // Create span
   const span = document.createElement("span");
   span.className = `word ${font}`;
@@ -158,7 +154,7 @@ ws.onmessage = (event) => {
   const y = rect.top - containerRect.top + rect.height / 2;
 
   const body = Bodies.rectangle(x, y, rect.width, rect.height, {
-    render: { fillStyle: "red" },
+    render: { fillStyle: "transparent" },
     restitution: 0.8,
     frictionAir: 0.01,
     friction: 0.2,
@@ -179,6 +175,19 @@ ws.onmessage = (event) => {
   // Add to world
   World.add(engine.world, [body]);
   wordBodies.push({ elem: span, body });
+
+  if (wordBodies.length > 10) {
+    const first = wordBodies.shift();
+    if (first) {
+      console.log(`Removing ${first.elem.textContent}`);
+
+      first.body.collisionFilter = {
+        category: 0x0003,
+      };
+      World.remove(engine.world, first.body);
+      textContainer.removeChild(first.elem);
+    }
+  }
 };
 
 function submitWord(e: Event) {
