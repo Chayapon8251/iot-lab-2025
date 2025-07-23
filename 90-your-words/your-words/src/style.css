@@ -1,0 +1,22 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-family: "IBM Plex Sans Thai Looped", sans-serif;
+}
+
+.ibm-plex-sans-thai {
+  font-family: "IBM Plex Sans Thai Looped", sans-serif;
+}
+
+.bai-jamjuree {
+  font-family: "Bai Jamjuree", sans-serif;
+}
+
+.anuphan {
+  font-family: "Anuphan", sans-serif;
+}
+
+.trirong {
+  font-family: "Trirong", serif;
+}

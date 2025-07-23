@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Words</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anuphan:wght@100..700&family=Bai+Jamjuree:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&family=IBM+Plex+Sans+Thai+Looped:wght@100;200;300;400;500;600;700&family=Trirong:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app" data-theme="dark" class="text-white overflow-hidden">
+      <div class="min-h-screen w-full relative select-none">
+        <div
+          class="absolute inset-0 z-0"
+          style="background: radial-gradient(125% 125% at 50% 90%, #000000 40%, #072607 100%)"
+        ></div>
+
+        <div id="text-container" class="absolute inset-0 z-0">
+          <!-- Text -->
+        </div>
+
+        <main class="relative">
+          <div class="flex flex-col items-center justify-center h-screen">
+            <h1 class="text-4xl font-bold">Your Words</h1>
+
+            <form class="mt-4" id="word-form">
+              <!-- Text Input -->
+              <input
+                type="text"
+                placeholder="Put it here..."
+                class="p-4 ring-0 border-0 focus:ring-0 focus:border-0 focus:outline-none"
+              />
+            </form>
+          </div>
+        </main>
+
+        <canvas id="canvas" class="absolute inset-0 z-0"></canvas>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
