@@ -24,7 +24,7 @@ app.get("/", (c) => {
 
 const FONTS = ["ibm-plex-sans-thai", "bai-jamjuree", "anuphan", "trirong"];
 const FONT_WEIGHTS = ["100", "200", "300", "400", "500", "600", "700", "800", "900"];
-const FONT_SIZES = [40, 48, 56, 64, 72, 80, 96];
+const FONT_SIZES = [16, 24, 32, 40, 48, 56, 64, 72];
 
 app.get(
   "/ws",
@@ -41,7 +41,7 @@ app.get(
         console.log(`[SessionId: ${cuid}] Message received: ${event.data}`);
         sessionService.broadcast(
           JSON.stringify({
-            text: event.data as string,
+            text: (event.data as string).trim().slice(0, 15),
             font: FONTS[Math.floor(Math.random() * FONTS.length)],
             fontWeight: FONT_WEIGHTS[Math.floor(Math.random() * FONT_WEIGHTS.length)],
             fontSize: FONT_SIZES[Math.floor(Math.random() * FONT_SIZES.length)],
