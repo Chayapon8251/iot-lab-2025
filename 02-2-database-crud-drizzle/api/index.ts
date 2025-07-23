@@ -9,7 +9,6 @@ app.use(
   "*",
   cors({
     origin: "http://localhost:5173",
-    allowHeaders: ["Content-Type"],
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
 );
