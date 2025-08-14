@@ -10,7 +10,7 @@ const app = new Hono().basePath("/api");
 app.use(
   "*",
   cors({
-   origin: "http://localhost:5173", // **ต้องแก้ไขเป็น URL จริง**
+   origin: "https://iot-lab-2025-3.onrender.com/", // **ต้องแก้ไขเป็น URL จริง**
    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   })
 );
