@@ -5,7 +5,11 @@
     "dev": "tsx watch api/index.ts",
     "vercel:dev": "vercel dev",
     "vercel:deploy": "vercel",
-    "drizzle": "drizzle-kit"
+    "drizzle": "drizzle-kit",
+    "build": "tsc -b && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "start": "vite"
   },
   "dependencies": {
     "@hono/node-server": "^1.16.0",
