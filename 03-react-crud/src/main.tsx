@@ -47,9 +47,9 @@ const router = createBrowserRouter([
 if (import.meta.env.VITE_API_URL) {
   axios.defaults.baseURL = import.meta.env.VITE_API_URL;
 }
-// if (import.meta.env.VITE_API_SECRET) {
-//   axios.defaults.headers.common["Authorization"] = `Bearer ${import.meta.env.VITE_API_SECRET}`;
-// }
+if (import.meta.env.VITE_API_SECRET) {
+  axios.defaults.headers.common["Authorization"] = `Bearer ${import.meta.env.VITE_API_SECRET}`;
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

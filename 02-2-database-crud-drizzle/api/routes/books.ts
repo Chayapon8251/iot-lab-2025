@@ -5,9 +5,12 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import dayjs from "dayjs";
+import { bearerAuth } from "hono/bearer-auth";
+import { env } from "hono/adapter";
 
 const booksRouter = new Hono();
 
+// Public routes
 booksRouter.get("/", async (c) => {
   const allBooks = await drizzle.select().from(books);
   return c.json(allBooks);
@@ -27,6 +30,18 @@ booksRouter.get("/:id", async (c) => {
   return c.json(result);
 });
 
+// Auth middleware เฉพาะสำหรับ POST, PATCH, DELETE
+booksRouter.use(
+  "*",
+  bearerAuth({
+    verifyToken: async (token, c) => {
+      const { API_SECRET } = env<{ API_SECRET: string }>(c);
+      return token === API_SECRET;
+    },
+  })
+);
+
+// Protected routes
 booksRouter.post(
   "/",
   zValidator(
