@@ -31,15 +31,15 @@ booksRouter.get("/:id", async (c) => {
 });
 
 // Auth middleware เฉพาะสำหรับ POST, PATCH, DELETE
-booksRouter.use(
-  "*",
-  bearerAuth({
-    verifyToken: async (token, c) => {
-      const { API_SECRET } = env<{ API_SECRET: string }>(c);
-      return token === API_SECRET;
-    },
-  })
-);
+// booksRouter.use(
+//   "*",
+//   bearerAuth({
+//     verifyToken: async (token, c) => {
+//       const { API_SECRET } = env<{ API_SECRET: string }>(c);
+//       return token === API_SECRET;
+//     },
+//   })
+// );
 
 // Protected routes
 booksRouter.post(
