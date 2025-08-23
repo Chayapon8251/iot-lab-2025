@@ -1,9 +1,13 @@
-import { drizzle as drizzlePgsql } from "drizzle-orm/vercel-postgres";
-import * as schema from "./schema.js";
+// drizzle.ts
+import 'dotenv/config';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from './schema';
 
-const drizzle = drizzlePgsql({
-  casing: "snake_case",
-  schema,
+const pool = new Pool({
+  connectionString: process.env.POSTGRES_URL, // ใช้ URL จาก .env ของคุณ
+  ssl: { rejectUnauthorized: false },         // Render บังคับ SSL
 });
 
-export default drizzle;
+export const db = drizzle(pool, { schema });
+export default db;

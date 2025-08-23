@@ -3,27 +3,17 @@ import * as t from "drizzle-orm/pg-core";
 
 export const genres = t.pgTable("genres", {
   id: t.bigserial({ mode: "number" }).primaryKey(),
-  title: t
-    .varchar({
-      length: 255,
-    })
-    .notNull(),
+  title: t.varchar({ length: 255 }).notNull(),
 });
 
 export const books = t.pgTable("books", {
   id: t.bigserial({ mode: "number" }).primaryKey(),
-  title: t
-    .varchar({
-      length: 255,
-    })
-    .notNull(),
-  author: t
-    .varchar({
-      length: 255,
-    })
-    .notNull(),
-  publishedAt: t.timestamp().notNull(),
+  title: t.varchar({ length: 255 }).notNull(),
+  author: t.varchar({ length: 255 }).notNull(),
+  // จะให้ default ตอน insert ก็ได้: t.timestamp().defaultNow().notNull()
+  publishedAt: t.timestamp({ mode: "date" }).notNull(),
 
+  // ต้องเป็น nullable เพื่อรองรับ onDelete: 'set null'
   genreId: t.bigint({ mode: "number" }).references(() => genres.id, {
     onDelete: "set null",
   }),
