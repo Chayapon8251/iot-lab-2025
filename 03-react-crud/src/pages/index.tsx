@@ -32,13 +32,10 @@ export default function HomePage() {
           </div>
         </div>
         <p className="text-right mt-8">
-          ปัจจุบันค่าเฟ่ และห้องสมุดของเรา อยู่ในช่วงการดูแลของ ....
+          ปัจจุบันค่าเฟ่ และห้องสมุดของเรา อยู่ในช่วงการดูแลของ Chayapon Donpat 66070039 <br />
           {/* TODO: ชื่อของตนเอง, รหัสประจำตัวนักศึกษา และแนะนำคาเฟ่นี้ต่ออีกสักหน่อย + ใส่รูปของตนเอง (ไม่จำเป็นหากไม่สะดวกใจใส่รูป) */}
-          ซึ่งมีบริการ... Lorem ipsum dolor sit amet consectetur adipisicing elit. Architecto
-          placeat sit ea sapiente officia sunt cumque impedit, reiciendis quis eius asperiores!
-          Minus, mollitia? Vitae inventore odio quod ducimus similique, expedita sequi, reiciendis
-          rem recusandae impedit voluptatibus quo veritatis ut quis et suscipit? Eligendi, neque!
-          Earum quaerat unde similique totam. Pariatur!
+           จะมาทำให้คาเฟ่แห่งนี้ น่าใช้ยิ่งกว่าเก่า!!  คุณสามารถสั่งเมนูเครื่องดื่ม และอื่นๆอีกมากมาย รวมไปถึง
+          มีหนังสือให้อ่านมากมายหลายประเภท
         </p>
       </section>
 
