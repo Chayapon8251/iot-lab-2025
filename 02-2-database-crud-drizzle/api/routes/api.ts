@@ -18,7 +18,7 @@ app.use('*', cors({
   // credentials: false, // ใช้ header Authorization ธรรมดา ไม่ต้องเปิด credentials
 }));
 
-
+app.route('/books', booksRouter);
 // (ถ้ามี basePath)
 // app.basePath('/api/v1');
 

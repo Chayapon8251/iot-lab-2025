@@ -6,7 +6,7 @@ import apiRouter from "./routes/api.js";
 import { serve } from "@hono/node-server";
 
 const app = new Hono().basePath("/api");
-
+export default app; 
 // CORS
 app.use(
   "*",
