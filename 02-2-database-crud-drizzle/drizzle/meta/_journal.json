@@ -8,6 +8,13 @@
       "when": 1752683789202,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1756071048115,
+      "tag": "0001_next_madame_masque",
+      "breakpoints": true
     }
   ]
 }

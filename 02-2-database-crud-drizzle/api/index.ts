@@ -3,24 +3,30 @@ import 'dotenv/config'
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import apiRouter from "./routes/api.js";
-import { serve } from "@hono/node-server"; // ใช้ serve จาก Node.js adapter แทน
+import { serve } from "@hono/node-server";
 
 const app = new Hono().basePath("/api");
 
-// CORS ควรตั้งค่า origin ให้เป็น URL ของ Frontend ที่คุณ Deploy แล้ว
-// เช่น "https://iot-lab-2025-frontend.onrender.com"
+// CORS
 app.use(
   "*",
   cors({
-   origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://iot-lab-2025-3.onrender.com/'],
-   allowHeaders: ['Content-Type', 'Authorization'],
-   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'https://iot-lab-2025-3.onrender.com/'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+    allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    maxAge: 86400,
   })
 );
 
+// Middleware ตรวจ Authorization (ถ้าต้องการ)
+app.use('*', async (c, next) => {
+  if (c.req.method === 'OPTIONS') return next();
+  // ตรวจ token ที่นี่ถ้าต้องการ
+  return next();
+});
+
 app.route("/v1", apiRouter);
 
-// **ส่วนนี้คือโค้ดที่คุณต้องเพิ่มเข้าไป**
 const port = parseInt(process.env.PORT) || 3000;
 serve({
   fetch: app.fetch,
