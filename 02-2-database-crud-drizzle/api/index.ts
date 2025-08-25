@@ -5,6 +5,8 @@ import { cors } from "hono/cors";
 import apiRouter from "./routes/api.js";
 import { serve } from "@hono/node-server";
 import categoriesRouter from "./routes/categories.js";
+import drinksRouter from "./routes/drinks.js";
+import ordersRouter from "./routes/orders.js";
 
 const app = new Hono().basePath("/api");
 export default app; 
@@ -29,6 +31,10 @@ app.use('*', async (c, next) => {
 app.route("/v1", apiRouter);
 
 app.route("/v1/categories", categoriesRouter);
+
+app.route("/v1/drinks", drinksRouter);
+
+app.route("/v1/orders", ordersRouter);
 // app.route("/api/v1/categories", categoriesRouter)
 
 const port = parseInt(process.env.PORT) || 3000;

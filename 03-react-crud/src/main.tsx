@@ -15,7 +15,11 @@ import BookByIdPage from "./pages/book-by-id";
 import BookEditById from "./pages/book-edit-by-id";
 import { ModalsProvider } from "@mantine/modals";
 import BookCreatePage from "./pages/book-create";
+import CoffeeMenuPage from "./pages/coffee";
+import StaffOrdersPage from "./pages/staff-orders";
 
+<Route path="/coffee" element={<CoffeeMenuPage />} />
+<Route path="/staff/orders" element={<StaffOrdersPage />} />
 
 const theme = createTheme({
   primaryColor: "orange",

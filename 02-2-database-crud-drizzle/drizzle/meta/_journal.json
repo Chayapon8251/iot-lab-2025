@@ -15,6 +15,13 @@
       "when": 1756071048115,
       "tag": "0001_next_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1756129276826,
+      "tag": "0002_deep_mole_man",
+      "breakpoints": true
     }
   ]
 }

@@ -50,3 +50,35 @@ export const bookRelations = relations(books, ({ one }) => ({
     references: [genres.id],
   }),
 }));
+
+export const drinks = t.pgTable("drinks", {
+  id: t.bigserial("id", { mode: "number" }).primaryKey(),
+  name: t.varchar("name", { length: 100 }).notNull(),
+  priceCents: t.integer("price_cents").notNull(),
+  isAvailable: t.boolean("is_available").notNull().default(true),
+});
+
+export const orders = t.pgTable("orders", {
+  id: t.bigserial("id", { mode: "number" }).primaryKey(),
+  note: t.text("note"),
+  status: t.varchar("status", { length: 20 }).notNull().default("pending"),
+  createdAt: t.timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const orderItems = t.pgTable("order_items", {
+  id: t.bigserial("id", { mode: "number" }).primaryKey(),
+  orderId: t.bigint("order_id", { mode: "number" }).references(() => orders.id, { onDelete: "cascade" }).notNull(),
+  drinkId: t.bigint("drink_id", { mode: "number" }).references(() => drinks.id).notNull(),
+  qty: t.integer("qty").notNull(),
+  unitPriceCents: t.integer("unit_price_cents").notNull(),
+  note: t.text("note"),
+});
+
+export const orderRelations = relations(orders, ({ many }) => ({
+  items: many(orderItems),
+}));
+
+export const orderItemRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  drink: one(drinks, { fields: [orderItems.drinkId], references: [drinks.id] }),
+}));
