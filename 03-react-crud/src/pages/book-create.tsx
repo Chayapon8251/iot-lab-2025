@@ -1,22 +1,30 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/layout";
-import { Button, Container, Divider, TextInput, NumberInput, Textarea, MultiSelect } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Divider,
+  TextInput,
+  NumberInput,
+  Textarea,
+  MultiSelect,
+} from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { DateTimePicker } from "@mantine/dates";
 import { http } from "../lib/http";
 import type { Book } from "../lib/models";
-import { CategoriesAPI, type Category } from "../lib/categories-api";
+import { CategoriesAPI, type Category } from "../lib/categories-api"; // <- ลบตัวอักษรแปลกออก
 
 type FormValues = {
   title: string;
   author: string;
-  publishedAt: Date | string;
-  genreId?: number | "" | null;
-  detail?: string;
-  synopsis?: string;
-  categoryIds: string[]; // MultiSelect ใช้ string[]
+  publishedAt: Date | null;
+  genreId: number | "" | null;   // คุมด้วย NumberInput
+  detail: string;
+  synopsis: string;
+  categoryIds: string[];         // เก็บเป็น string[] ในฟอร์ม
 };
 
 export default function BookCreatePage() {
@@ -27,17 +35,16 @@ export default function BookCreatePage() {
   const [catOptions, setCatOptions] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
-    // ดึงหมวดหมู่มาเป็นตัวเลือก
     CategoriesAPI.list()
       .then((res) => {
         const data: any = res.data;
-        const rows: Category[] = Array.isArray(data) ? data : (data.categories ?? []);
+        const rows: Category[] = Array.isArray(data) ? data : data.categories ?? [];
         setCatOptions(rows.map((c) => ({ value: String(c.id), label: c.title })));
       })
       .catch(() => {});
   }, []);
 
-  const bookCreateForm = useForm<FormValues>({
+  const form = useForm<FormValues>({
     initialValues: {
       title: "",
       author: "",
@@ -58,14 +65,20 @@ export default function BookCreatePage() {
     try {
       setIsProcessing(true);
 
+      const published =
+        values.publishedAt instanceof Date && !isNaN(values.publishedAt.valueOf())
+          ? values.publishedAt
+          : new Date();
+
       const payload = {
         title: values.title,
         author: values.author,
-        publishedAt: new Date(values.publishedAt).toISOString(),
+        publishedAt: published.toISOString(),
         genreId: values.genreId === "" ? null : Number(values.genreId),
         detail: values.detail || null,
         synopsis: values.synopsis || null,
-        categoryIds: values.categoryIds.map((v) => Number(v)), // ⬅️ array ของ id
+        // แปลง string[] → number[] ตอนส่ง
+        categoryIds: values.categoryIds.map((v) => Number(v)),
       };
 
       const res = await http.post<{ book: Book }>("/books", payload);
@@ -94,54 +107,59 @@ export default function BookCreatePage() {
       <Container className="mt-8">
         <h1 className="text-xl">เพิ่มหนังสือในระบบ</h1>
 
-        <form onSubmit={bookCreateForm.onSubmit(handleSubmit)} className="space-y-8">
-          <TextInput label="ชื่อหนังสือ" placeholder="ชื่อหนังสือ" {...bookCreateForm.getInputProps("title")} />
-          <TextInput label="ชื่อผู้แต่ง" placeholder="ชื่อผู้แต่ง" {...bookCreateForm.getInputProps("author")} />
-          <DateTimePicker label="วันที่พิมพ์" placeholder="วันที่พิมพ์" {...bookCreateForm.getInputProps("publishedAt")} />
+        <form onSubmit={form.onSubmit(handleSubmit)} className="space-y-8">
+          <TextInput label="ชื่อหนังสือ" placeholder="ชื่อหนังสือ" {...form.getInputProps("title")} />
+          <TextInput label="ชื่อผู้แต่ง" placeholder="ชื่อผู้แต่ง" {...form.getInputProps("author")} />
+
+          {/* DateTimePicker v7 รับ Date | null */}
+          <DateTimePicker
+            label="วันที่พิมพ์"
+            placeholder="วันที่พิมพ์"
+            value={form.values.publishedAt}
+            onChange={(d) => form.setFieldValue("publishedAt", d)}
+          />
+
+          {/* NumberInput v7: คุมค่าเอง ไม่ใช้ getInputProps */}
           <NumberInput
             label="หมวดหมู่หลัก (genreId) - ใส่เป็นตัวเลขหรือเว้นว่าง"
             placeholder="1"
-            {...bookCreateForm.getInputProps("genreId")}
             min={1}
+            value={form.values.genreId === "" || form.values.genreId === null ? "" : Number(form.values.genreId)}
+            onChange={(val) => form.setFieldValue("genreId", val === "" ? "" : Number(val))}
           />
 
-          {/* ใหม่: รายละเอียด + เรื่องย่อ */}
           <Textarea
             label="รายละเอียดหนังสือ"
             placeholder="เช่น เล่มปกแข็ง 320 หน้า..."
-            autosize minRows={3}
-            {...bookCreateForm.getInputProps("detail")}
+            autosize
+            minRows={3}
+            {...form.getInputProps("detail")}
           />
+
           <Textarea
             label="เรื่องย่อ"
             placeholder="สรุปเนื้อเรื่องโดยย่อ..."
-            autosize minRows={4}
-            {...bookCreateForm.getInputProps("synopsis")}
+            autosize
+            minRows={4}
+            {...form.getInputProps("synopsis")}
           />
 
-          {/* ใหม่: เลือกหลายหมวดหมู่ */}
+          {/* MultiSelect v7: เก็บ string[] ในฟอร์ม */}
           <MultiSelect
             label="หมวดหมู่ (เลือกได้หลายอัน)"
             placeholder="เลือกหมวดหมู่"
             searchable
             clearable
+            nothingFoundMessage="ไม่พบหมวดหมู่"
             data={catOptions}
-            {...bookCreateForm.getInputProps("categoryIds")}
-            // เปิดให้สร้างใหม่ได้ (ถ้าต้องการ)
-            creatable
-            getCreateLabel={(q) => `+ สร้างหมวดหมู่ "${q}"`}
-            onCreate={async (query) => {
-              // สร้างในฐานข้อมูล แล้วเติมเข้า options
-              const created = await CategoriesAPI.create(query);
-              const cat = created.data.category;
-              const item = { value: String(cat.id), label: cat.title };
-              setCatOptions((c) => [...c, item]);
-              return item;
-            }}
+            value={form.values.categoryIds}
+            onChange={(vals) => form.setFieldValue("categoryIds", vals)}
           />
 
           <Divider />
-          <Button type="submit" loading={isProcessing}>บันทึกข้อมูล</Button>
+          <Button type="submit" loading={isProcessing}>
+            บันทึกข้อมูล
+          </Button>
         </form>
       </Container>
     </Layout>
