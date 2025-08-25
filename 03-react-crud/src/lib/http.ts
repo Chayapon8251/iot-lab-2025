@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL   = (import.meta.env.VITE_API_URL   ?? "http://localhost:3000/api/v1").replace(/\/+$/, "");
+const API_URL   = (import.meta.env.VITE_API_URL   ?? "https://database-iot5.onrender.com/api/v1").replace(/\/+$/, "");
 const API_TOKEN =  import.meta.env.VITE_API_TOKEN ?? "1234";
 
 export const http = axios.create({

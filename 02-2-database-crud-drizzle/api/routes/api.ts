@@ -1,36 +1,42 @@
-import { Hono } from "hono";
+import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import booksRouter from "./books.js";
-import { bearerAuth } from "hono/bearer-auth";
-import { env } from "hono/adapter";
-import drinksRouter from "./drinks.js";
-import ordersRouter from "./orders.js";
-// const apiRouter = new Hono();
+import { env } from 'hono/adapter';
+import booksRouter from './books.js';
+import drinksRouter from './drinks.js';
+import ordersRouter from './orders.js';
 
 const app = new Hono();
 export default app;
 
-// ✅ CORS ต้องประกาศก่อน route ทั้งหมด
-app.use('*', cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173, https://iot-lab-2025-1.onrender.com'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  maxAge: 86400,
-  // credentials: false, // ใช้ header Authorization ธรรมดา ไม่ต้องเปิด credentials
-}));
+// CORS ก่อนทุก route
+app.use(
+  '*',
+  cors({
+    origin: [
+      'https://iot-lab-2025-11.onrender.com', // ✅ โดเมนหน้าเว็บที่ถูกต้อง
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+    ],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'x-api-secret'], // ✅ ต้องมี header นี้
+    maxAge: 86400,
+  })
+);
 
-app.route('/books', booksRouter);
-// (ถ้ามี basePath)
-// app.basePath('/api/v1');
-app.route("/drinks", drinksRouter);
-app.route("/orders", ordersRouter);
-
-// (ถ้ามี middleware ตรวจ Authorization ทั่วระบบ ให้ "ยกเว้น OPTIONS")
+// auth แบบง่าย (ยกเว้น OPTIONS)
 app.use('*', async (c, next) => {
-  if (c.req.method === 'OPTIONS') return next(); // อย่าบล็อกพรีไฟลต์
-  // ...ตรวจ Authorization: 1234 ตามเดิม...
+  if (c.req.method === 'OPTIONS') return next();
+  const { API_SECRET = '1234' } = env<{ API_SECRET: string }>(c);
+  const clientSecret = c.req.header('x-api-secret') ?? '';
+  if (clientSecret !== API_SECRET) return c.text('Unauthorized', 401);
   return next();
 });
 
-// routes ของคุณ ...
+// health
 app.get('/health', (c) => c.text('ok'));
+
+// ⚠️ ต้องประกาศ basePath ก่อนค่อยผูก route
+const api = app.basePath('/api/v1');
+api.route('/books', booksRouter);
+api.route('/drinks', drinksRouter);
+api.route('/orders', ordersRouter);
