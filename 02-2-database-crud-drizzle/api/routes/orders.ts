@@ -1,97 +1,75 @@
 import { Hono } from "hono";
-import drizzle from "../db/drizzle.js";
-import { drinks, orders, orderItems } from "../db/schema.js";
-import { inArray, eq, desc } from "drizzle-orm";
-import { z } from "zod";
-import { zValidator } from "@hono/zod-validator";
+import { DRINKS } from "./drinks.js";
 
-const r = new Hono();
+type Status = "pending" | "preparing" | "done" | "cancelled";
+type Item   = { drinkId: number; qty: number; note: string | null };
+type Order  = { id: number; createdAt: string; note: string | null; status: Status; items: Item[] };
 
-// สร้างคำสั่งซื้อ
-const createOrderBody = z.object({
-  note: z.string().max(500).optional().nullable(),
-  items: z.array(
-    z.object({
-      drinkId: z.number().int(),
-      qty: z.number().int().positive().max(99),
-      note: z.string().max(200).optional().nullable(),
-    })
-  ).min(1),
-});
+let seq = 1;
+const store: Order[] = [];
 
-r.post("/", zValidator("json", createOrderBody), async (c) => {
-  const body = c.req.valid("json");
+const router = new Hono();
 
-  // ดึงราคา ณ ปัจจุบัน
-  const ids = body.items.map(i => i.drinkId);
-  const menu = await drizzle.select().from(drinks).where(inArray(drinks.id, ids));
-
-  // map id -> price
-  const priceMap = new Map(menu.map(m => [m.id!, m.priceCents!]));
-
-  const created = await drizzle.transaction(async (tx) => {
-    const [o] = await tx.insert(orders).values({
-      note: body.note ?? null,
-      status: "pending",
-    }).returning({ id: orders.id, createdAt: orders.createdAt });
-
-    // บันทึกรายการ
-    const rows = body.items.map(it => ({
-      orderId: o.id,
-      drinkId: it.drinkId,
-      qty: it.qty,
-      unitPriceCents: priceMap.get(it.drinkId) ?? 0,
-      note: it.note ?? null,
-    }));
-    await tx.insert(orderItems).values(rows);
-
-    return o;
-  });
-
-  return c.json({ success: true, orderId: created.id, createdAt: created.createdAt }, 201);
-});
-
-// สำหรับ Staff: ดูรายการคำสั่งซื้อ (ล่าสุดก่อน)
-r.get("/", async (c) => {
-  const os = await drizzle.select().from(orders).orderBy(desc(orders.createdAt)).limit(50);
-
-  // ดึง items ทั้งหมดในชุดเดียว
-  const orderIds = os.map(o => o.id);
-  let items: any[] = [];
-  if (orderIds.length) {
-    items = await drizzle
-      .select({
-        orderId: orderItems.orderId,
-        drinkId: orderItems.drinkId,
-        qty: orderItems.qty,
-        unitPriceCents: orderItems.unitPriceCents,
-        itemNote: orderItems.note,
-        drinkName: drinks.name,
-      })
-      .from(orderItems)
-      .innerJoin(drinks, eq(orderItems.drinkId, drinks.id))
-      .where(inArray(orderItems.orderId, orderIds));
+// สร้างออเดอร์
+router.post("/", async (c) => {
+  const body = (await c.req.json()) as { note: string | null; items: Item[] };
+  if (!Array.isArray(body.items) || body.items.length === 0) {
+    return c.json({ error: "no items" }, 400);
   }
 
-  // grouping
-  const grouped: Record<number, any[]> = {};
-  for (const it of items) {
-    (grouped[it.orderId] ??= []).push(it);
-  }
+  const order: Order = {
+    id: seq++,
+    createdAt: new Date().toISOString(),
+    note: body.note ?? null,
+    status: "pending",
+    items: body.items.map((i) => ({
+      drinkId: Number(i.drinkId),
+      qty: Number(i.qty),
+      note: i.note ?? null,
+    })),
+  };
 
-  return c.json(os.map(o => ({ ...o, items: grouped[o.id] ?? [] })));
+  store.push(order);
+  return c.json({ success: true, orderId: order.id }, 201);
 });
 
-// อัปเดตสถานะ (ตัวเลือก)
-const patchStatusBody = z.object({
-  status: z.enum(["pending", "preparing", "done", "cancelled"]),
+// ดึงรายการ (แปลงเป็นรูปแบบที่หน้า Staff ใช้)
+router.get("/", (c) => {
+  const out = [...store].reverse().map((o) => ({
+    id: o.id,
+    createdAt: o.createdAt,
+    note: o.note,
+    status: o.status,
+    items: o.items.map((it) => {
+      const d = DRINKS.find((x) => x.id === it.drinkId);
+      return {
+        drinkId: it.drinkId,
+        drinkName: d?.name ?? `#${it.drinkId}`,
+        unitPriceCents: d?.priceCents ?? 0,
+        qty: it.qty,
+        itemNote: it.note,
+      };
+    }),
+  }));
+  return c.json(out);
 });
-r.patch("/:id/status", zValidator("json", patchStatusBody), async (c) => {
+
+// เปลี่ยนสถานะออเดอร์
+router.patch("/:id/status", async (c) => {
   const id = Number(c.req.param("id"));
-  const { status } = c.req.valid("json");
-  const res = await drizzle.update(orders).set({ status }).where(eq(orders.id, id)).returning();
-  if (res.length === 0) return c.json({ error: "Order not found" }, 404);
-  return c.json({ success: true, order: res[0] });
+  if (!Number.isFinite(id)) return c.json({ error: "bad id" }, 400);
+
+  const body = (await c.req.json()) as { status?: Status };
+  const allowed: Status[] = ["pending", "preparing", "done", "cancelled"];
+  if (!body.status || !allowed.includes(body.status)) {
+    return c.json({ error: "bad status" }, 400);
+  }
+
+  const order = store.find((o) => o.id === id);
+  if (!order) return c.json({ error: "not found" }, 404);
+
+  order.status = body.status;
+  return c.json({ success: true, status: order.status });
 });
 
-export default r;
+export default router;

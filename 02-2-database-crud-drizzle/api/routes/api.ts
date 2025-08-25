@@ -3,7 +3,8 @@ import { cors } from 'hono/cors';
 import booksRouter from "./books.js";
 import { bearerAuth } from "hono/bearer-auth";
 import { env } from "hono/adapter";
-
+import drinksRouter from "./drinks.js";
+import ordersRouter from "./orders.js";
 // const apiRouter = new Hono();
 
 const app = new Hono();
@@ -21,6 +22,8 @@ app.use('*', cors({
 app.route('/books', booksRouter);
 // (ถ้ามี basePath)
 // app.basePath('/api/v1');
+app.route("/drinks", drinksRouter);
+app.route("/orders", ordersRouter);
 
 // (ถ้ามี middleware ตรวจ Authorization ทั่วระบบ ให้ "ยกเว้น OPTIONS")
 app.use('*', async (c, next) => {
