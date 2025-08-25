@@ -8,40 +8,56 @@ import {
   TextInput,
   NumberInput,
   Textarea,
-  MultiSelect,
+  Select,
+  Group,
+  Badge,
+  CloseButton,
+  Text,
+  Loader,
 } from "@mantine/core";
 import { isNotEmpty, useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { DateTimePicker } from "@mantine/dates";
 import { http } from "../lib/http";
 import type { Book } from "../lib/models";
-import { CategoriesAPI, type Category } from "../lib/categories-api"; // <- ลบตัวอักษรแปลกออก
+import { CategoriesAPI, type Category } from "../lib/categories-api";
 
 type FormValues = {
   title: string;
   author: string;
   publishedAt: Date | null;
-  genreId: number | "" | null;   // คุมด้วย NumberInput
+  genreId: number | "" | null;
   detail: string;
   synopsis: string;
-  categoryIds: string[];         // เก็บเป็น string[] ในฟอร์ม
+  categoryIds: string[]; // เก็บเป็น string[] ในฟอร์ม
 };
 
 export default function BookCreatePage() {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // options ของหมวดหมู่
+  // dropdown options
   const [catOptions, setCatOptions] = useState<{ value: string; label: string }[]>([]);
+  const [categoryPick, setCategoryPick] = useState<string | null>(null);
+  const [catsLoading, setCatsLoading] = useState(true);
+  const [catsError, setCatsError] = useState<string | null>(null);
 
   useEffect(() => {
-    CategoriesAPI.list()
-      .then((res) => {
+    (async () => {
+      try {
+        setCatsLoading(true);
+        const res = await CategoriesAPI.list();
         const data: any = res.data;
-        const rows: Category[] = Array.isArray(data) ? data : data.categories ?? [];
+        const rows: Category[] = Array.isArray(data) ? data : data?.categories ?? [];
         setCatOptions(rows.map((c) => ({ value: String(c.id), label: c.title })));
-      })
-      .catch(() => {});
+        setCatsError(null);
+      } catch (e: any) {
+        setCatsError(e?.message ?? "โหลดหมวดหมู่ไม่สำเร็จ");
+        setCatOptions([]);
+      } finally {
+        setCatsLoading(false);
+      }
+    })();
   }, []);
 
   const form = useForm<FormValues>({
@@ -77,19 +93,16 @@ export default function BookCreatePage() {
         genreId: values.genreId === "" ? null : Number(values.genreId),
         detail: values.detail || null,
         synopsis: values.synopsis || null,
-        // แปลง string[] → number[] ตอนส่ง
         categoryIds: values.categoryIds.map((v) => Number(v)),
       };
 
       const res = await http.post<{ book: Book }>("/books", payload);
-      const book = res.data.book;
-
       notifications.show({
         title: "เพิ่มข้อมูลหนังสือสำเร็จ",
         message: "ข้อมูลหนังสือได้รับการเพิ่มเรียบร้อยแล้ว",
         color: "teal",
       });
-      navigate(`/books/${book.id}`);
+      navigate(`/books/${res.data.book.id}`);
     } catch (error: any) {
       notifications.show({
         title: "เกิดข้อผิดพลาด",
@@ -104,14 +117,14 @@ export default function BookCreatePage() {
 
   return (
     <Layout>
-      <Container className="mt-8">
+      {/* เพิ่ม pb-24 ให้มีพื้นที่ด้านล่าง */}
+      <Container className="mt-8 pb-24">
         <h1 className="text-xl">เพิ่มหนังสือในระบบ</h1>
 
         <form onSubmit={form.onSubmit(handleSubmit)} className="space-y-8">
           <TextInput label="ชื่อหนังสือ" placeholder="ชื่อหนังสือ" {...form.getInputProps("title")} />
           <TextInput label="ชื่อผู้แต่ง" placeholder="ชื่อผู้แต่ง" {...form.getInputProps("author")} />
 
-          {/* DateTimePicker v7 รับ Date | null */}
           <DateTimePicker
             label="วันที่พิมพ์"
             placeholder="วันที่พิมพ์"
@@ -119,13 +132,15 @@ export default function BookCreatePage() {
             onChange={(d) => form.setFieldValue("publishedAt", d)}
           />
 
-          {/* NumberInput v7: คุมค่าเอง ไม่ใช้ getInputProps */}
           <NumberInput
             label="หมวดหมู่หลัก (genreId) - ใส่เป็นตัวเลขหรือเว้นว่าง"
             placeholder="1"
             min={1}
-            value={form.values.genreId === "" || form.values.genreId === null ? "" : Number(form.values.genreId)}
-            onChange={(val) => form.setFieldValue("genreId", val === "" ? "" : Number(val))}
+            value={typeof form.values.genreId === "number" ? form.values.genreId : ""}
+            onChange={(val) =>
+              form.setFieldValue("genreId", val === "" || val === null ? "" : Number(val))
+            }
+            allowDecimal={false}
           />
 
           <Textarea
@@ -144,17 +159,62 @@ export default function BookCreatePage() {
             {...form.getInputProps("synopsis")}
           />
 
-          {/* MultiSelect v7: เก็บ string[] ในฟอร์ม */}
-          <MultiSelect
-            label="หมวดหมู่ (เลือกได้หลายอัน)"
-            placeholder="เลือกหมวดหมู่"
+          {/* เลือกหมวดหมู่ทีละอัน */}
+          <Select
+            label="หมวดหมู่"
+            placeholder={catsLoading ? "กำลังโหลด..." : "เลือกหมวดหมู่"}
             searchable
             clearable
-            nothingFoundMessage="ไม่พบหมวดหมู่"
+            nothingFoundMessage={catsLoading ? "กำลังโหลด..." : "ไม่พบหมวดหมู่"}
             data={catOptions}
-            value={form.values.categoryIds}
-            onChange={(vals) => form.setFieldValue("categoryIds", vals)}
+            value={categoryPick}
+            onChange={setCategoryPick}
+            rightSection={catsLoading ? <Loader size="xs" /> : undefined}
           />
+
+          <Group justify="flex-start" gap="xs">
+            <Button
+              variant="light"
+              onClick={() => {
+                if (!categoryPick) return;
+                if (!form.values.categoryIds.includes(categoryPick)) {
+                  form.setFieldValue("categoryIds", [...form.values.categoryIds, categoryPick]);
+                }
+                setCategoryPick(null);
+              }}
+              disabled={!categoryPick}
+            >
+              เพิ่มหมวดหมู่
+            </Button>
+
+            {catsError && <Text c="red">({catsError})</Text>}
+          </Group>
+
+          {/* แสดงที่เลือกแล้ว */}
+          <Group mt="xs" gap="xs">
+            {form.values.categoryIds.length === 0 && <Text c="dimmed">ยังไม่ได้เลือก</Text>}
+            {form.values.categoryIds.map((id) => {
+              const label = catOptions.find((o) => o.value === id)?.label ?? id;
+              return (
+                <Badge
+                  key={id}
+                  rightSection={
+                    <CloseButton
+                      size="xs"
+                      onClick={() =>
+                        form.setFieldValue(
+                          "categoryIds",
+                          form.values.categoryIds.filter((x) => x !== id)
+                        )
+                      }
+                    />
+                  }
+                >
+                  {label}
+                </Badge>
+              );
+            })}
+          </Group>
 
           <Divider />
           <Button type="submit" loading={isProcessing}>

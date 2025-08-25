@@ -1,14 +1,9 @@
 import axios from "axios";
 
-export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3000/api/v1",
-  headers: { "Content-Type": "application/json" },
-});
+const API_URL   = (import.meta.env.VITE_API_URL   ?? "http://localhost:3000/api/v1").replace(/\/+$/, "");
+const API_TOKEN =  import.meta.env.VITE_API_TOKEN ?? "1234";
 
-// ใส่ Authorization header ทุกครั้ง
-http.interceptors.request.use((config) => {
-  const token = import.meta.env.VITE_AUTH_TOKEN ?? "1234";
-  config.headers = config.headers ?? {};
-  (config.headers as any).Authorization = token;
-  return config;
+export const http = axios.create({
+  baseURL: API_URL,                      // >>> ตัวนี้ต้องลงท้ายด้วย /api/v1
+  headers: { Authorization: API_TOKEN }, // ถ้า backend ต้องใช้ header นี้
 });
