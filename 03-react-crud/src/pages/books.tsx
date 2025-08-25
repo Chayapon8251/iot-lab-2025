@@ -4,6 +4,8 @@ import { Container, Button } from "@mantine/core";
 import { Link, useNavigate } from "react-router-dom";
 import { http } from "../lib/http";
 
+{/* <Link to={`/books/${book.id}`}>ดูรายละเอียด</Link> */}
+
 type Book = {
   id: number;
   title: string;
@@ -52,5 +54,6 @@ export default function BooksPage() {
         </ul>
       </Container>
     </Layout>
+    
   );
 }
